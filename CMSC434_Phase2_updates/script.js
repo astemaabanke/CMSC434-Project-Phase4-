@@ -5,8 +5,12 @@ function showPage(pageId) {
 
   document.querySelectorAll(".tab").forEach((t) => {
     t.classList.remove("active");
-    if (pageId.includes(t.innerText.toLowerCase())) t.classList.add("active");
+    if (t.dataset.page === pageId) t.classList.add("active");
   });
+
+  // Hide on-screen keyboard when navigating
+  document.getElementById("osk-text").style.display = "none";
+  document.getElementById("osk-num").style.display = "none";
 }
 /* ------------------------------- TRANSACTIONS PAGE ------------------------------------------ */
 const saveButton = document.getElementById("saveBtn");
@@ -245,11 +249,7 @@ let goalIdx = 0;
 
 function moveGoal(dir) {
   goalIdx = (goalIdx + dir + goalsList.length) % goalsList.length;
-  const g = goalsList[goalIdx];
-  document.getElementById("goal-name").innerText = g.name;
-  document.getElementById("goal-saved").innerText = `$${g.saved}`;
-  document.getElementById("goal-total").innerText = `$${g.total}`;
-  document.getElementById("progress-fill").style.width = g.pct + "%";
+  updateGoalUI();
 }
 
 /* --- DEEP VERTICAL TASK: ADDING A NEW GOAL --- */
@@ -430,13 +430,9 @@ function drawPieChart() {
     path.setAttribute("class", "pie-slice");
     path.setAttribute("data-category", data.name.toLowerCase());
 
-    // Add hover effect to show percentage
-    path.addEventListener("mouseenter", function () {
-      updateSummary(data.name, data.percentage);
-    });
-
-    // Add click handler to show transaction details
+    // Tap/click updates summary and shows transaction details (works on tablet)
     path.addEventListener("click", function () {
+      updateSummary(data.name, data.percentage);
       showTransactionDetails(data.name);
     });
 
@@ -454,11 +450,32 @@ function drawPieChart() {
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("dominant-baseline", "middle");
     text.setAttribute("fill", "white");
-    text.setAttribute("font-size", "16");
-    text.setAttribute("font-weight", "bold");
     text.setAttribute("font-family", "Inter, sans-serif");
     text.setAttribute("pointer-events", "none"); // Don't block hover on pie slice
-    text.textContent = `${data.percentage}%`;
+
+    if (sliceAngle >= 35) {
+      // Large enough slice: show % on first line, dollar amount on second
+      const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan1.setAttribute("x", labelX);
+      tspan1.setAttribute("dy", "-7");
+      tspan1.setAttribute("font-size", "13");
+      tspan1.setAttribute("font-weight", "bold");
+      tspan1.textContent = `${data.percentage}%`;
+
+      const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan2.setAttribute("x", labelX);
+      tspan2.setAttribute("dy", "14");
+      tspan2.setAttribute("font-size", "11");
+      tspan2.textContent = `$${data.amount.toLocaleString()}`;
+
+      text.appendChild(tspan1);
+      text.appendChild(tspan2);
+    } else {
+      // Small slice: just show percentage
+      text.setAttribute("font-size", "12");
+      text.setAttribute("font-weight", "bold");
+      text.textContent = `${data.percentage}%`;
+    }
 
     svg.appendChild(text);
 
@@ -496,10 +513,32 @@ function setupCategoryToggles() {
   });
 }
 
+/* --- Generate legend dynamically from spendingData --- */
+function generateLegend() {
+  const legend = document.getElementById("category-legend");
+  legend.innerHTML = "";
+  spendingData.forEach((data) => {
+    const item = document.createElement("div");
+    item.className = "category-item";
+    item.innerHTML = `
+      <label>
+        <input type="checkbox" class="category-checkbox" data-category="${data.name.toLowerCase()}" checked />
+        <span class="color-box" style="background: ${data.color}"></span>
+        <span class="category-label">${data.name} ${data.percentage}%</span>
+        <span class="legend-amount">$${data.amount.toLocaleString()}</span>
+      </label>`;
+    legend.appendChild(item);
+  });
+}
+
 /* --- Initialize insights page when loaded --- */
 function initInsights() {
+  generateLegend();
   drawPieChart();
   setupCategoryToggles();
+  // Show top spending category by default (no hover needed)
+  const top = spendingData.reduce((max, d) => (d.percentage > max.percentage ? d : max));
+  updateSummary(top.name, top.percentage);
 }
 
 /* --- Show transaction details modal (MODERATE TASK) --- */
@@ -645,9 +684,59 @@ function drawComparisonChart(svgId, data) {
   });
 }
 
+/* ------------------------------- ON-SCREEN KEYBOARD ------------------------------------------ */
+let oskActiveInput = null;
+
+function setupKeyboard() {
+  const oskText = document.getElementById("osk-text");
+  const oskNum = document.getElementById("osk-num");
+  const numericIds = ["amount", "goal-add-amount", "new-g-target", "new-g-saved"];
+
+  document.querySelectorAll("input").forEach((input) => {
+    if (input.type === "date") return;
+
+    input.addEventListener("focus", () => {
+      oskActiveInput = input;
+      const isNumeric = input.type === "number" || numericIds.includes(input.id);
+      if (isNumeric) {
+        oskNum.style.display = "flex";
+        oskText.style.display = "none";
+      } else {
+        oskText.style.display = "flex";
+        oskNum.style.display = "none";
+      }
+    });
+  });
+
+  document.querySelectorAll(".osk-key").forEach((key) => {
+    key.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // keep focus on the input
+      if (!oskActiveInput) return;
+      const val = key.dataset.val;
+      if (val === "backspace") {
+        oskActiveInput.value = oskActiveInput.value.slice(0, -1);
+      } else if (val === "done") {
+        oskActiveInput.blur();
+        oskText.style.display = "none";
+        oskNum.style.display = "none";
+        oskActiveInput = null;
+      } else if (val === "space") {
+        oskActiveInput.value += " ";
+      } else {
+        oskActiveInput.value += val;
+      }
+    });
+  });
+}
+
 // Run when page loads
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initInsights);
-} else {
+function initApp() {
   initInsights();
+  setupKeyboard();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
 }

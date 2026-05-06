@@ -112,7 +112,7 @@
       <!-- goals tab -->
       <section id="goals-section" class="app-page">
         <header><h1>Goals</h1></header>
-        <main>
+        <main class="goals-main">
           <div id="new-pop" class="overlay" onclick="closePop(event)">
             <div class="box">
               <h3>New Goal</h3>
@@ -181,36 +181,7 @@
                   <!-- Pie chart will be drawn here by JavaScript -->
                 </svg>
 
-                <div class="category-legend">
-                  <div class="category-item">
-                    <label>
-                      <input type="checkbox" class="category-checkbox" data-category="rent" checked />
-                      <span class="color-box" style="background: #5b7fff"></span>
-                      <span class="category-label">Rent 40%</span>
-                    </label>
-                  </div>
-                  <div class="category-item">
-                    <label>
-                      <input type="checkbox" class="category-checkbox" data-category="food" checked />
-                      <span class="color-box" style="background: #ff69b4"></span>
-                      <span class="category-label">Food 25%</span>
-                    </label>
-                  </div>
-                  <div class="category-item">
-                    <label>
-                      <input type="checkbox" class="category-checkbox" data-category="shopping" checked />
-                      <span class="color-box" style="background: #ffa500"></span>
-                      <span class="category-label">Shopping 20%</span>
-                    </label>
-                  </div>
-                  <div class="category-item">
-                    <label>
-                      <input type="checkbox" class="category-checkbox" data-category="transport" checked />
-                      <span class="color-box" style="background: #20c997"></span>
-                      <span class="category-label">Transport 15%</span>
-                    </label>
-                  </div>
-                </div>
+                <div class="category-legend" id="category-legend"></div>
               </div>
             </div>
 
@@ -263,10 +234,18 @@
       </div>
 
       <nav class="tab-bar">
-        <div class="tab" onclick="showPage('overview-section')">OVERVIEW</div>
-        <div class="tab" onclick="showPage('add-section')">ADD</div>
-        <div class="tab active" onclick="showPage('goals-section')">GOAL</div>
-        <div class="tab" onclick="showPage('insights-section')">INSIGHTS</div>
+        <div class="tab" data-page="overview-section" onclick="showPage('overview-section')">
+          <span class="tab-icon">🏠</span><span class="tab-label">OVERVIEW</span>
+        </div>
+        <div class="tab" data-page="add-section" onclick="showPage('add-section')">
+          <span class="tab-icon">➕</span><span class="tab-label">ADD</span>
+        </div>
+        <div class="tab active" data-page="goals-section" onclick="showPage('goals-section')">
+          <span class="tab-icon">🎯</span><span class="tab-label">GOALS</span>
+        </div>
+        <div class="tab" data-page="insights-section" onclick="showPage('insights-section')">
+          <span class="tab-icon">📊</span><span class="tab-label">INSIGHTS</span>
+        </div>
       </nav>
 
 
@@ -276,6 +255,86 @@
           <input type="text" placeholder="Goal Name" />
           <input type="number" placeholder="Target ($)" />
           <button onclick="closePop()">Create</button>
+        </div>
+      </div>
+
+      <!-- On-Screen Keyboard (QWERTY) -->
+      <div id="osk-text" class="osk" style="display:none">
+        <div class="osk-row">
+          <button class="osk-key" data-val="1">1</button>
+          <button class="osk-key" data-val="2">2</button>
+          <button class="osk-key" data-val="3">3</button>
+          <button class="osk-key" data-val="4">4</button>
+          <button class="osk-key" data-val="5">5</button>
+          <button class="osk-key" data-val="6">6</button>
+          <button class="osk-key" data-val="7">7</button>
+          <button class="osk-key" data-val="8">8</button>
+          <button class="osk-key" data-val="9">9</button>
+          <button class="osk-key" data-val="0">0</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val="q">q</button>
+          <button class="osk-key" data-val="w">w</button>
+          <button class="osk-key" data-val="e">e</button>
+          <button class="osk-key" data-val="r">r</button>
+          <button class="osk-key" data-val="t">t</button>
+          <button class="osk-key" data-val="y">y</button>
+          <button class="osk-key" data-val="u">u</button>
+          <button class="osk-key" data-val="i">i</button>
+          <button class="osk-key" data-val="o">o</button>
+          <button class="osk-key" data-val="p">p</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val="a">a</button>
+          <button class="osk-key" data-val="s">s</button>
+          <button class="osk-key" data-val="d">d</button>
+          <button class="osk-key" data-val="f">f</button>
+          <button class="osk-key" data-val="g">g</button>
+          <button class="osk-key" data-val="h">h</button>
+          <button class="osk-key" data-val="j">j</button>
+          <button class="osk-key" data-val="k">k</button>
+          <button class="osk-key" data-val="l">l</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val="z">z</button>
+          <button class="osk-key" data-val="x">x</button>
+          <button class="osk-key" data-val="c">c</button>
+          <button class="osk-key" data-val="v">v</button>
+          <button class="osk-key" data-val="b">b</button>
+          <button class="osk-key" data-val="n">n</button>
+          <button class="osk-key" data-val="m">m</button>
+          <button class="osk-key osk-key-action" data-val="backspace">&#9003;</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key osk-key-space" data-val="space">space</button>
+          <button class="osk-key osk-key-done" data-val="done">Done</button>
+        </div>
+      </div>
+
+      <!-- On-Screen Keyboard (Numpad) -->
+      <div id="osk-num" class="osk osk-numpad" style="display:none">
+        <div class="osk-row">
+          <button class="osk-key" data-val="7">7</button>
+          <button class="osk-key" data-val="8">8</button>
+          <button class="osk-key" data-val="9">9</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val="4">4</button>
+          <button class="osk-key" data-val="5">5</button>
+          <button class="osk-key" data-val="6">6</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val="1">1</button>
+          <button class="osk-key" data-val="2">2</button>
+          <button class="osk-key" data-val="3">3</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key" data-val=".">.</button>
+          <button class="osk-key" data-val="0">0</button>
+          <button class="osk-key osk-key-action" data-val="backspace">&#9003;</button>
+        </div>
+        <div class="osk-row">
+          <button class="osk-key osk-key-done" data-val="done">Done</button>
         </div>
       </div>
     </div>
