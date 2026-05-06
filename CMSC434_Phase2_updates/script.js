@@ -293,19 +293,16 @@ function addNewGoal() {
 function updateGoalUI() {
   const g = goalsList[goalIdx];
   
-  // Update text elements
   document.getElementById("goal-name").innerText = g.name;
-  document.getElementById("goal-saved").innerText = `$${g.saved.toLocaleString()}`;
   document.getElementById("goal-total").innerText = `$${g.total.toLocaleString()}`;
   
-  // Update progress bar width
   const progressFill = document.getElementById("progress-fill");
   progressFill.style.width = g.pct + "%";
-  
-  // Optional: Update progress percentage text if you have a label for it
-  const pctLabel = document.getElementById("goal-pct-label");
-  if (pctLabel) {
-    pctLabel.innerText = `${g.pct}%`;
+
+  const marker = document.getElementById("goal-saved-marker");
+  if (marker) {
+    marker.innerText = `$${g.saved.toLocaleString()}`;
+    marker.style.left = g.pct + "%";
   }
 }
 
@@ -327,7 +324,6 @@ function addAmountToGoal() {
 
   updateGoalUI();
   input.value = "";
-  closePop();
 }
 
 /* --- popups for adding to and creating goals --- */

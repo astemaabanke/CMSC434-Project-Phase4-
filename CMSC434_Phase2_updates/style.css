@@ -363,6 +363,43 @@ main {
   border: 1px solid #ccc;
 }
 
+.progress-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.progress-marker {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.add-to-goal-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.add-to-goal-row input {
+  flex: 1;
+  margin-top: 0;
+}
+
+.add-goal-btn {
+  white-space: nowrap;
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+
 .progress-bar {
   background: var(--green);
   height: 100%;

@@ -134,15 +134,20 @@
             <button onclick="moveGoal(1)">&gt;</button>
           </div>
           <div class="goal-card">
-            <div class="progress-bg">
-              <div id="progress-fill" class="progress-bar" style="width: 60%"></div>
+            <div class="progress-wrapper">
+              <div class="progress-bg">
+                <div id="progress-fill" class="progress-bar" style="width: 60%"></div>
+              </div>
+              <span id="goal-saved-marker" class="progress-marker" style="left: 60%">$1,200</span>
             </div>
             <div class="labels">
               <span>$0</span>
-              <span id="goal-saved">$1,200</span>
               <span id="goal-total">$2,000</span>
             </div>
-            <button class="btn" onclick="openPop('add-pop')">+ Add To Goal</button>
+            <div class="add-to-goal-row">
+              <input type="number" id="goal-add-amount" placeholder="Enter amount ($)" min="0" />
+              <button class="btn add-goal-btn" onclick="addAmountToGoal()">+ Add</button>
+            </div>
           </div>
           <button class="btn main-btn" onclick="openPop('new-pop')">+ Create New Goal</button>
         </main>
@@ -264,16 +269,6 @@
         <div class="tab" onclick="showPage('insights-section')">INSIGHTS</div>
       </nav>
 
-      <div id="add-pop" class="overlay" onclick="closePop(event)">
-        <div class="popup">
-          <h3>Add to Goal</h3>
-          <input type="number" id="goal-add-amount" placeholder="Enter Amount ($)" />
-          <div class="row">
-            <button class="btn" onclick="closePop()">Cancel</button>
-            <button class="btn" style="background: var(--green); color: white" onclick="addAmountToGoal()">Add</button>
-          </div>
-        </div>
-      </div>
 
       <div id="new-pop" class="overlay" onclick="closePop(event)">
         <div class="popup">
