@@ -243,6 +243,53 @@ main {
   background: #2e7d32;
 }
 
+.overview-spent-clickable {
+  cursor: pointer;
+  text-decoration: underline dotted #555;
+  text-underline-offset: 3px;
+}
+.overview-spent-clickable:hover {
+  color: #c62828;
+}
+
+.spending-breakdown-list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.spending-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.breakdown-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breakdown-meta {
+  font-size: 13px;
+  color: #c62828;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .overview-progress-labels {
   display: flex;
   justify-content: space-between;
@@ -284,8 +331,25 @@ main {
   color: #111827;
 }
 
+.overview-payment-amount {
+  font-family: "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #c62828;
+  flex: 1;
+  text-align: center;
+}
+
 .overview-payment-date {
   color: #4b5563;
+}
+
+.goal-counter {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0 0 12px;
 }
 
 .overview-highlight-text {

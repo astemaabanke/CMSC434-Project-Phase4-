@@ -113,7 +113,11 @@ saveButton.addEventListener("click", () => {
   }
 
   if (amountValue === "" || finalCategory === "" || dateValue === "") {
-    alert("Please fill out all fields.");
+    const missing = [];
+    if (amountValue === "") missing.push("Amount");
+    if (finalCategory === "") missing.push("Category");
+    if (dateValue === "") missing.push("Date");
+    alert(`Please fill out the following field(s): ${missing.join(", ")}.`);
     return;
   }
 
@@ -337,6 +341,9 @@ function updateGoalUI() {
   
   document.getElementById("goal-name").innerText = g.name;
   document.getElementById("goal-total").innerText = `$${g.total.toLocaleString()}`;
+
+  const counter = document.getElementById("goal-counter");
+  if (counter) counter.innerText = `Goal ${goalIdx + 1} of ${goalsList.length}`;
   
   const progressFill = document.getElementById("progress-fill");
   progressFill.style.width = g.pct + "%";
@@ -383,6 +390,38 @@ function deleteCurrentGoal() {
   }
   goalIdx = Math.min(goalIdx, goalsList.length - 1);
   updateGoalUI();
+}
+
+/* --- spending breakdown popup --- */
+function openSpendingBreakdown() {
+  const items = document.querySelectorAll("#transactionList .transaction-item[data-type='expense']");
+  const list = document.getElementById("spending-breakdown-list");
+  list.innerHTML = "";
+
+  if (items.length === 0) {
+    list.innerHTML = '<p style="color:#6b7280;text-align:center;">No expenses recorded yet.</p>';
+  } else {
+    const expenses = [];
+    items.forEach((item) => {
+      const amount = parseFloat(item.dataset.amount) || 0;
+      const label = item.querySelector(".transaction-category")?.textContent || item.dataset.category || "Expense";
+      const date = item.dataset.date || "";
+      expenses.push({ label, amount, date });
+    });
+    expenses.sort((a, b) => b.amount - a.amount);
+
+    expenses.forEach(({ label, amount, date }) => {
+      const row = document.createElement("div");
+      row.className = "spending-breakdown-item";
+      row.innerHTML = `
+        <span class="breakdown-label">${label}</span>
+        <span class="breakdown-meta">${date ? date + " &bull; " : ""}-$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  openPop("spending-breakdown-pop");
 }
 
 /* --- popups for adding to and creating goals --- */
@@ -662,8 +701,11 @@ function applyDateFilter() {
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
 
-  // In a real app, this would filter the data by date range
-  // For now, we'll just redraw with a message
+  if (startDate && endDate && startDate > endDate) {
+    alert("Invalid date range: the 'From' date cannot be after the 'To' date.");
+    return;
+  }
+
   const summaryText = document.querySelector(".spending-summary p");
   summaryText.textContent = `Showing data from ${startDate} to ${endDate}. You spent 40% of your budget on Rent.`;
 
