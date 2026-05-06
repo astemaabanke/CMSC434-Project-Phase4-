@@ -19,7 +19,7 @@
         <main class="overview-main">
           <section class="overview-card balance-card">
             <p class="overview-balance-label">Current Balance</p>
-            <p class="overview-balance-value">$1,572.00</p>
+            <p class="overview-balance-value" id="overview-balance">$1,572.00</p>
           </section>
 
           <section class="overview-grid">
@@ -27,16 +27,16 @@
               <h2 class="overview-card-title">Budget Status</h2>
 
               <div class="overview-progress-bar">
-                <div class="overview-progress-spent"></div>
-                <div class="overview-progress-remaining"></div>
+                <div class="overview-progress-spent" id="overview-progress-spent"></div>
+                <div class="overview-progress-remaining" id="overview-progress-remaining"></div>
               </div>
 
               <div class="overview-progress-labels">
-                <span>$550 spent</span>
-                <span>$1,800 total</span>
+                <span id="overview-spent-label">$0 spent</span>
+                <span id="overview-budget-label">$1,800 total</span>
               </div>
 
-              <p class="overview-supporting-text">You have <strong>$1,250 remaining</strong> this month.</p>
+              <p class="overview-supporting-text" id="overview-remaining-text">You have <strong>$1,800 remaining</strong> this month.</p>
             </div>
 
             <div class="overview-card payments-card">
@@ -61,7 +61,8 @@
 
           <section class="overview-card highlight-card">
             <h2 class="overview-card-title">Stats</h2>
-            <p class="overview-highlight-text">Netflix is your highest priced subscription</p>
+            <p class="overview-highlight-text">Netflix is your highest priced subscription — <strong>$15.99/mo</strong></p>
+            <p class="overview-highlight-subtext">Other subscriptions: Spotify $9.99/mo, Hulu $17.99/mo. Total recurring: <strong>$43.97/mo</strong>.</p>
             <p class="overview-highlight-subtext">Review subscriptions if you want to lower recurring expenses.</p>
           </section>
 
@@ -148,6 +149,7 @@
               <input type="number" id="goal-add-amount" placeholder="Enter amount ($)" min="0" />
               <button class="btn add-goal-btn" onclick="addAmountToGoal()">+ Add</button>
             </div>
+            <button class="btn delete-goal-btn" onclick="deleteCurrentGoal()">🗑 Delete Goal</button>
           </div>
           <button class="btn main-btn" onclick="openPop('new-pop')">+ Create New Goal</button>
         </main>

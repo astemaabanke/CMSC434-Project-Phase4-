@@ -439,6 +439,33 @@ main {
   border-color: var(--green);
 }
 
+.delete-goal-btn {
+  margin-top: 12px;
+  width: 100%;
+  color: #c62828;
+  border-color: #e57373;
+  background: #fff5f5;
+  font-size: 14px;
+  padding: 8px;
+}
+
+.delete-goal-btn:hover {
+  background: #ffeaea;
+}
+
+/* Comparison shared legend */
+.comparison-shared-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 20px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}\n\n.comparison-legend-item {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 13px;\n  font-family: \"Inter\", sans-serif;\n  color: #111827;\n}
+
 .progress-bar {
   background: var(--green);
   height: 100%;

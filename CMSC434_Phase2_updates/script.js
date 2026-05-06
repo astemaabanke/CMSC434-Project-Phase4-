@@ -12,6 +12,45 @@ function showPage(pageId) {
   document.getElementById("osk-text").style.display = "none";
   document.getElementById("osk-num").style.display = "none";
 }
+/* ------------------------------- OVERVIEW PAGE ------------------------------------------ */
+const MONTHLY_BUDGET = 1800;
+const BASE_BALANCE = 1572; // starting balance before any user-entered transactions
+
+function updateOverview() {
+  const items = document.querySelectorAll("#transactionList .transaction-item");
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  items.forEach((item) => {
+    const amount = parseFloat(item.dataset.amount) || 0;
+    if (item.dataset.type === "income") {
+      totalIncome += amount;
+    } else {
+      totalExpense += amount;
+    }
+  });
+
+  const balance = BASE_BALANCE + totalIncome - totalExpense;
+  const remaining = MONTHLY_BUDGET - totalExpense;
+  const spentPct = Math.min((totalExpense / MONTHLY_BUDGET) * 100, 100);
+  const remainingPct = 100 - spentPct;
+
+  document.getElementById("overview-balance").textContent =
+    "$" + balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  document.getElementById("overview-progress-spent").style.width = spentPct + "%";
+  document.getElementById("overview-progress-remaining").style.width = remainingPct + "%";
+
+  document.getElementById("overview-spent-label").textContent =
+    "$" + totalExpense.toLocaleString() + " spent";
+  document.getElementById("overview-budget-label").textContent =
+    "$" + MONTHLY_BUDGET.toLocaleString() + " total";
+
+  const remainingFormatted = "$" + Math.max(remaining, 0).toLocaleString();
+  document.getElementById("overview-remaining-text").innerHTML =
+    `You have <strong>${remainingFormatted} remaining</strong> this month.`;
+}
+
 /* ------------------------------- TRANSACTIONS PAGE ------------------------------------------ */
 const saveButton = document.getElementById("saveBtn");
 const amountInput = document.getElementById("amount");
@@ -142,6 +181,7 @@ function createTransaction(category, date, amount, type) {
       clearForm();
     }
     transactionItem.remove();
+    updateOverview();
   });
 
   actionRow.appendChild(editButton);
@@ -154,6 +194,7 @@ function createTransaction(category, date, amount, type) {
   transactionItem.appendChild(rightSide);
 
   transactionList.prepend(transactionItem);
+  updateOverview();
 }
 
 function updateTransaction(transactionItem, category, date, amount, type) {
@@ -172,6 +213,7 @@ function updateTransaction(transactionItem, category, date, amount, type) {
   categoryText.textContent = category;
   dateText.textContent = formatDate(date);
   amountText.textContent = formatAmount(amount, type);
+  updateOverview();
 }
 
 function loadTransactionIntoForm(transactionItem) {
@@ -326,6 +368,23 @@ function addAmountToGoal() {
   input.value = "";
 }
 
+function deleteCurrentGoal() {
+  if (goalsList.length === 0) return;
+  if (!confirm(`Delete "${goalsList[goalIdx].name}"? This cannot be undone.`)) return;
+  goalsList.splice(goalIdx, 1);
+  if (goalsList.length === 0) {
+    // No goals left — clear the UI
+    document.getElementById("goal-name").innerText = "No goals yet";
+    document.getElementById("goal-total").innerText = "$0";
+    document.getElementById("progress-fill").style.width = "0%";
+    const marker = document.getElementById("goal-saved-marker");
+    if (marker) { marker.innerText = ""; marker.style.left = "0%"; }
+    return;
+  }
+  goalIdx = Math.min(goalIdx, goalsList.length - 1);
+  updateGoalUI();
+}
+
 /* --- popups for adding to and creating goals --- */
 function openPop(id) {
   document.getElementById(id).style.display = "flex";
@@ -454,13 +513,14 @@ function drawPieChart() {
     text.setAttribute("pointer-events", "none"); // Don't block hover on pie slice
 
     if (sliceAngle >= 35) {
-      // Large enough slice: show % on first line, dollar amount on second
+      // Large enough slice: show recalculated % on first line, dollar amount on second
+      const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
       const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
       tspan1.setAttribute("x", labelX);
       tspan1.setAttribute("dy", "-7");
       tspan1.setAttribute("font-size", "13");
       tspan1.setAttribute("font-weight", "bold");
-      tspan1.textContent = `${data.percentage}%`;
+      tspan1.textContent = `${adjustedPct}%`;
 
       const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
       tspan2.setAttribute("x", labelX);
@@ -471,10 +531,11 @@ function drawPieChart() {
       text.appendChild(tspan1);
       text.appendChild(tspan2);
     } else {
-      // Small slice: just show percentage
+      // Small slice: just show recalculated percentage
+      const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
       text.setAttribute("font-size", "12");
       text.setAttribute("font-weight", "bold");
-      text.textContent = `${data.percentage}%`;
+      text.textContent = `${adjustedPct}%`;
     }
 
     svg.appendChild(text);
@@ -491,25 +552,26 @@ function updateSummary(categoryName, percentage) {
 
 /* --- Toggle category visibility --- */
 function setupCategoryToggles() {
-  const checkboxes = document.querySelectorAll(".category-checkbox");
-  checkboxes.forEach((checkbox, index) => {
-    checkbox.addEventListener("change", function () {
-      drawPieChart();
+  const legend = document.getElementById("category-legend");
+  legend.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("category-checkbox")) return;
+    generateLegend();
+    drawPieChart();
+    setupCategoryToggles();
 
-      // Update summary to show the first visible category
-      const visibleCategories = spendingData.filter((data, idx) => {
-        const cb = document.querySelectorAll(".category-checkbox")[idx];
-        return cb && cb.checked;
-      });
-
-      if (visibleCategories.length > 0) {
-        // Find the category with highest percentage
-        const topCategory = visibleCategories.reduce((max, cat) => (cat.percentage > max.percentage ? cat : max));
-        updateSummary(topCategory.name, topCategory.percentage);
-      } else {
-        document.querySelector(".spending-summary p").textContent = "Select a category to view spending insights.";
-      }
+    const visibleCategories = spendingData.filter((data) => {
+      const cb = document.querySelector(`.category-checkbox[data-category="${data.name.toLowerCase()}"]`);
+      return cb && cb.checked;
     });
+
+    if (visibleCategories.length > 0) {
+      const top = visibleCategories.reduce((max, cat) => (cat.percentage > max.percentage ? cat : max));
+      const visibleTotal = visibleCategories.reduce((sum, d) => sum + d.percentage, 0);
+      const adjustedPct = Math.round((top.percentage / visibleTotal) * 100);
+      updateSummary(top.name, adjustedPct);
+    } else {
+      document.querySelector(".spending-summary p").textContent = "Select a category to view spending insights.";
+    }
   });
 }
 
@@ -517,14 +579,28 @@ function setupCategoryToggles() {
 function generateLegend() {
   const legend = document.getElementById("category-legend");
   legend.innerHTML = "";
+
+  // Get checked state before regenerating
+  const checkedStates = {};
+  document.querySelectorAll(".category-checkbox").forEach((cb) => {
+    checkedStates[cb.dataset.category] = cb.checked;
+  });
+
+  // Calculate current total for adjusted %
+  const visibleTotal = spendingData
+    .filter((d) => checkedStates[d.name.toLowerCase()] !== false)
+    .reduce((sum, d) => sum + d.percentage, 0) || 100;
+
   spendingData.forEach((data) => {
+    const isChecked = checkedStates[data.name.toLowerCase()] !== false;
+    const adjustedPct = Math.round((data.percentage / visibleTotal) * 100);
     const item = document.createElement("div");
     item.className = "category-item";
     item.innerHTML = `
       <label>
-        <input type="checkbox" class="category-checkbox" data-category="${data.name.toLowerCase()}" checked />
+        <input type="checkbox" class="category-checkbox" data-category="${data.name.toLowerCase()}" ${isChecked ? "checked" : ""} />
         <span class="color-box" style="background: ${data.color}"></span>
-        <span class="category-label">${data.name} ${data.percentage}%</span>
+        <span class="category-label">${data.name} ${isChecked ? adjustedPct : data.percentage}%</span>
         <span class="legend-amount">$${data.amount.toLocaleString()}</span>
       </label>`;
     legend.appendChild(item);
@@ -600,15 +676,35 @@ function toggleComparison() {
   const compareView = document.getElementById("comparison-view");
 
   if (compareView.style.display === "none") {
-    // Show comparison view
     singleView.style.display = "none";
     compareView.style.display = "block";
     drawComparisonCharts();
+    renderComparisonLegend();
   } else {
-    // Show single view
     singleView.style.display = "block";
     compareView.style.display = "none";
   }
+}
+
+/* --- Shared legend for comparison view --- */
+function renderComparisonLegend() {
+  const existing = document.getElementById("comparison-legend");
+  if (existing) existing.remove();
+
+  const legend = document.createElement("div");
+  legend.id = "comparison-legend";
+  legend.className = "comparison-shared-legend";
+
+  spendingData.forEach((data) => {
+    const item = document.createElement("div");
+    item.className = "comparison-legend-item";
+    item.innerHTML = `
+      <span class="color-box" style="background: ${data.color}"></span>
+      <span class="category-label">${data.name}</span>`;
+    legend.appendChild(item);
+  });
+
+  document.getElementById("comparison-view").appendChild(legend);
 }
 
 /* --- Draw comparison charts --- */
