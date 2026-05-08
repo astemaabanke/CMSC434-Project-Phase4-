@@ -13,8 +13,22 @@ function showPage(pageId) {
   document.getElementById("osk-num").style.display = "none";
 }
 /* ------------------------------- OVERVIEW PAGE ------------------------------------------ */
-const MONTHLY_BUDGET = 1800;
+let MONTHLY_BUDGET = 1800;
 const BASE_BALANCE = 1572; // starting balance before any user-entered transactions
+
+function setMonthlyBudget() {
+  const newBudget = prompt("Enter your monthly budget:");
+
+  const parsed = parseFloat(newBudget);
+
+  if (isNaN(parsed) || parsed <= 0) {
+    alert("Please enter a valid budget amount.");
+    return;
+  }
+
+  MONTHLY_BUDGET = parsed;
+  updateOverview();
+}
 
 function updateOverview() {
   const items = document.querySelectorAll("#transactionList .transaction-item");
@@ -337,14 +351,56 @@ function addNewGoal() {
 
 /* HELPER: Separate UI updates to keep code clean */
 function updateGoalUI() {
+  const amountInput = document.getElementById("goal-add-amount");
+  const addButton = document.querySelector(".add-goal-btn");
+  const counter = document.getElementById("goal-counter");
+
+  // No goals state
+  if (goalsList.length === 0) {
+    document.getElementById("goal-name").innerText = "No goals yet";
+    document.getElementById("goal-total").innerText = "$0";
+    document.getElementById("progress-fill").style.width = "0%";
+
+    const marker = document.getElementById("goal-saved-marker");
+    if (marker) {
+      marker.innerText = "";
+      marker.style.left = "0%";
+    }
+
+    // Hide counter
+    if (counter) {
+      counter.style.display = "none";
+    }
+
+    // Disable amount entry
+    amountInput.disabled = true;
+    amountInput.readOnly = true;
+    amountInput.value = "";
+    amountInput.placeholder = "Create a goal before adding money";
+
+    // Disable add button
+    addButton.disabled = true;
+
+    return;
+  }
+
+  // Goals exist
+  amountInput.disabled = false;
+  amountInput.readOnly = false;
+  amountInput.placeholder = "Enter amount ($)";
+
+  addButton.disabled = false;
+
+  if (counter) {
+    counter.style.display = "block";
+    counter.innerText = `Goal ${goalIdx + 1} of ${goalsList.length}`;
+  }
+
   const g = goalsList[goalIdx];
-  
+
   document.getElementById("goal-name").innerText = g.name;
   document.getElementById("goal-total").innerText = `$${g.total.toLocaleString()}`;
 
-  const counter = document.getElementById("goal-counter");
-  if (counter) counter.innerText = `Goal ${goalIdx + 1} of ${goalsList.length}`;
-  
   const progressFill = document.getElementById("progress-fill");
   progressFill.style.width = g.pct + "%";
 
@@ -357,6 +413,10 @@ function updateGoalUI() {
 
 /* --- DEEP VERTICAL TASK: ADDING AMOUNT TO EXISTING GOAL --- */
 function addAmountToGoal() {
+  if (goalsList.length === 0) {
+    alert("Create a goal before adding money.");
+    return;
+  }
 
   const input = document.getElementById("goal-add-amount");
   const amount = parseFloat(input.value);
@@ -370,7 +430,6 @@ function addAmountToGoal() {
   currentGoal.saved += amount;
   currentGoal.pct = Math.min(Math.round((currentGoal.saved / currentGoal.total) * 100), 100);
 
-
   updateGoalUI();
   input.value = "";
 }
@@ -380,15 +439,30 @@ function deleteCurrentGoal() {
   if (!confirm(`Delete "${goalsList[goalIdx].name}"? This cannot be undone.`)) return;
   goalsList.splice(goalIdx, 1);
   if (goalsList.length === 0) {
-    // No goals left — clear the UI
+    // No goals left so we clear the UI
     document.getElementById("goal-name").innerText = "No goals yet";
     document.getElementById("goal-total").innerText = "$0";
     document.getElementById("progress-fill").style.width = "0%";
+
     const marker = document.getElementById("goal-saved-marker");
-    if (marker) { marker.innerText = ""; marker.style.left = "0%"; }
+    if (marker) {
+      marker.innerText = "";
+      marker.style.left = "0%";
+    }
+
+    // Hide goal counter when there are no goals
+    const counter = document.getElementById("goal-counter");
+    if (counter) {
+      counter.style.display = "none";
+    }
     return;
   }
   goalIdx = Math.min(goalIdx, goalsList.length - 1);
+  // Make sure counter reappears if goals still exist
+  const counter = document.getElementById("goal-counter");
+  if (counter) {
+    counter.style.display = "block";
+  }
   updateGoalUI();
 }
 
@@ -482,26 +556,60 @@ function drawPieChart() {
   const centerY = 100;
 
   // Filter visible categories based on checkboxes
-  const visibleCategories = spendingData.filter((data, index) => {
-    const checkbox = document.querySelectorAll(".category-checkbox")[index];
+  const visibleCategories = spendingData.filter((data) => {
+    const checkbox = document.querySelector(
+      `.category-checkbox[data-category="${data.name.toLowerCase()}"]`
+    );
+
     return checkbox && checkbox.checked;
   });
 
   // Calculate total percentage of visible categories
   const totalPercentage = visibleCategories.reduce((sum, item) => sum + item.percentage, 0);
 
+  // No categories selected
   if (totalPercentage === 0) {
-    // Draw empty circle if no categories selected
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("cx", centerX);
     circle.setAttribute("cy", centerY);
     circle.setAttribute("r", radius);
     circle.setAttribute("fill", "#e5e7eb");
+
     svg.appendChild(circle);
     return;
   }
 
-  visibleCategories.forEach((data, index) => {
+  // Special case: only one category selected
+  if (visibleCategories.length === 1) {
+    const data = visibleCategories[0];
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", centerX);
+    circle.setAttribute("cy", centerY);
+    circle.setAttribute("r", radius);
+    circle.setAttribute("fill", data.color);
+
+    svg.appendChild(circle);
+
+    // Add centered label
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+    text.setAttribute("x", centerX);
+    text.setAttribute("y", centerY);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("fill", "white");
+    text.setAttribute("font-size", "18");
+    text.setAttribute("font-weight", "bold");
+    text.setAttribute("font-family", "Inter, sans-serif");
+
+    text.textContent = "100%";
+
+    svg.appendChild(text);
+    return;
+  }
+
+  visibleCategories.forEach((data) => {
     const sliceAngle = (data.percentage / totalPercentage) * 360;
 
     // Calculate arc path
@@ -528,32 +636,35 @@ function drawPieChart() {
     path.setAttribute("class", "pie-slice");
     path.setAttribute("data-category", data.name.toLowerCase());
 
-    // Tap/click updates summary and shows transaction details (works on tablet)
+    // Click updates summary and shows transaction details
     path.addEventListener("click", function () {
-      updateSummary(data.name, data.percentage);
+      const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
+      updateSummary(data.name, adjustedPct);
       showTransactionDetails(data.name);
     });
 
     svg.appendChild(path);
 
-    // Add text label inside the slice
+    // Add text label inside slice
     const midAngle = ((currentAngle + sliceAngle / 2) * Math.PI) / 180;
-    const labelRadius = radius * 0.65; // Position label 65% from center
+    const labelRadius = radius * 0.65;
+
     const labelX = centerX + labelRadius * Math.cos(midAngle);
     const labelY = centerY + labelRadius * Math.sin(midAngle);
 
+    const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
+
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
     text.setAttribute("x", labelX);
     text.setAttribute("y", labelY);
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("dominant-baseline", "middle");
     text.setAttribute("fill", "white");
     text.setAttribute("font-family", "Inter, sans-serif");
-    text.setAttribute("pointer-events", "none"); // Don't block hover on pie slice
+    text.setAttribute("pointer-events", "none");
 
     if (sliceAngle >= 35) {
-      // Large enough slice: show recalculated % on first line, dollar amount on second
-      const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
       const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
       tspan1.setAttribute("x", labelX);
       tspan1.setAttribute("dy", "-7");
@@ -569,9 +680,8 @@ function drawPieChart() {
 
       text.appendChild(tspan1);
       text.appendChild(tspan2);
+
     } else {
-      // Small slice: just show recalculated percentage
-      const adjustedPct = Math.round((data.percentage / totalPercentage) * 100);
       text.setAttribute("font-size", "12");
       text.setAttribute("font-weight", "bold");
       text.textContent = `${adjustedPct}%`;
@@ -592,24 +702,45 @@ function updateSummary(categoryName, percentage) {
 /* --- Toggle category visibility --- */
 function setupCategoryToggles() {
   const legend = document.getElementById("category-legend");
+
   legend.addEventListener("change", function (e) {
     if (!e.target.classList.contains("category-checkbox")) return;
-    generateLegend();
+
     drawPieChart();
-    setupCategoryToggles();
 
     const visibleCategories = spendingData.filter((data) => {
-      const cb = document.querySelector(`.category-checkbox[data-category="${data.name.toLowerCase()}"]`);
+      const cb = document.querySelector(
+        `.category-checkbox[data-category="${data.name.toLowerCase()}"]`
+      );
       return cb && cb.checked;
     });
 
+    const visibleTotal = visibleCategories.reduce((sum, d) => sum + d.percentage, 0);
+
+    document.querySelectorAll(".category-checkbox").forEach((cb) => {
+      const categoryName = cb.dataset.category;
+      const data = spendingData.find((d) => d.name.toLowerCase() === categoryName);
+      const label = cb.parentElement.querySelector(".category-label");
+
+      if (!data || !label) return;
+
+      if (cb.checked && visibleTotal > 0) {
+        const adjustedPct = Math.round((data.percentage / visibleTotal) * 100);
+        label.textContent = `${data.name} ${adjustedPct}%`;
+      } else {
+        label.textContent = `${data.name} 0%`;
+      }
+    });
+
     if (visibleCategories.length > 0) {
-      const top = visibleCategories.reduce((max, cat) => (cat.percentage > max.percentage ? cat : max));
-      const visibleTotal = visibleCategories.reduce((sum, d) => sum + d.percentage, 0);
+      const top = visibleCategories.reduce((max, cat) =>
+        cat.percentage > max.percentage ? cat : max
+      );
       const adjustedPct = Math.round((top.percentage / visibleTotal) * 100);
       updateSummary(top.name, adjustedPct);
     } else {
-      document.querySelector(".spending-summary p").textContent = "Select a category to view spending insights.";
+      document.querySelector(".spending-summary p").textContent =
+        "Select a category to view spending insights.";
     }
   });
 }
@@ -716,15 +847,23 @@ function applyDateFilter() {
 function toggleComparison() {
   const singleView = document.getElementById("single-chart-view");
   const compareView = document.getElementById("comparison-view");
+  const compareButton = document.querySelector(".date-filter .btn:not(.filter-btn)");
 
   if (compareView.style.display === "none") {
+    // Enter comparison mode
     singleView.style.display = "none";
     compareView.style.display = "block";
+
     drawComparisonCharts();
     renderComparisonLegend();
+
+    compareButton.textContent = "Exit Comparison";
   } else {
+    // Exit comparison mode
     singleView.style.display = "block";
     compareView.style.display = "none";
+
+    compareButton.textContent = "Compare Periods";
   }
 }
 
@@ -830,12 +969,18 @@ function setupKeyboard() {
   const oskNum = document.getElementById("osk-num");
   const numericIds = ["amount", "goal-add-amount", "new-g-target", "new-g-saved"];
 
-  document.querySelectorAll("input").forEach((input) => {
-    if (input.type === "date") return;
+  // Ignore checkboxes and date inputs
+  document.querySelectorAll('input:not([type="checkbox"]):not([type="date"])').forEach((input) => {
 
     input.addEventListener("focus", () => {
+      // Ignore disabled/readOnly inputs
+      if (input.disabled || input.readOnly) return;
+
       oskActiveInput = input;
-      const isNumeric = input.type === "number" || numericIds.includes(input.id);
+
+      const isNumeric =
+        input.type === "number" || numericIds.includes(input.id);
+
       if (isNumeric) {
         oskNum.style.display = "flex";
         oskText.style.display = "none";
@@ -849,17 +994,23 @@ function setupKeyboard() {
   document.querySelectorAll(".osk-key").forEach((key) => {
     key.addEventListener("mousedown", (e) => {
       e.preventDefault(); // keep focus on the input
+
       if (!oskActiveInput) return;
+
       const val = key.dataset.val;
+
       if (val === "backspace") {
         oskActiveInput.value = oskActiveInput.value.slice(0, -1);
+
       } else if (val === "done") {
         oskActiveInput.blur();
         oskText.style.display = "none";
         oskNum.style.display = "none";
         oskActiveInput = null;
+
       } else if (val === "space") {
         oskActiveInput.value += " ";
+
       } else {
         oskActiveInput.value += val;
       }
@@ -878,3 +1029,6 @@ if (document.readyState === "loading") {
 } else {
   initApp();
 }
+
+// Initialize overview values on app load
+updateOverview();

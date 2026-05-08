@@ -11,7 +11,7 @@
   <body>
     <div id="device-container">
       <!-- overview tab -->
-      <section id="overview-section" class="app-page" style="display: none">
+      <section id="overview-section" class="app-page">
 
         <!-- Spending Breakdown Popup -->
         <div id="spending-breakdown-pop" class="overlay" onclick="closePop(event)">
@@ -46,6 +46,7 @@
               </div>
 
               <p class="overview-supporting-text" id="overview-remaining-text">You have <strong>$1,800 remaining</strong> this month.</p>
+              <button onclick="setMonthlyBudget()" class="btn set-budget-btn">Set Budget</button>
             </div>
 
             <div class="overview-card payments-card">
@@ -123,7 +124,7 @@
       </section>
 
       <!-- goals tab -->
-      <section id="goals-section" class="app-page">
+      <section id="goals-section" class="app-page" style="display: none">
         <header><h1>Goals</h1></header>
         <main class="goals-main">
           <div id="new-pop" class="overlay" onclick="closePop(event)">
@@ -249,13 +250,13 @@
       </div>
 
       <nav class="tab-bar">
-        <div class="tab" data-page="overview-section" onclick="showPage('overview-section')">
+        <div class="tab active" data-page="overview-section" onclick="showPage('overview-section')">
           <span class="tab-icon">🏠</span><span class="tab-label">OVERVIEW</span>
         </div>
         <div class="tab" data-page="add-section" onclick="showPage('add-section')">
           <span class="tab-icon">➕</span><span class="tab-label">TRANSACTIONS</span>
         </div>
-        <div class="tab active" data-page="goals-section" onclick="showPage('goals-section')">
+        <div class="tab" data-page="goals-section" onclick="showPage('goals-section')">
           <span class="tab-icon">🎯</span><span class="tab-label">GOALS</span>
         </div>
         <div class="tab" data-page="insights-section" onclick="showPage('insights-section')">
